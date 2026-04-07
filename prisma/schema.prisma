@@ -1,0 +1,36 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  brand        String
+  category     String   // "batom", "sombra", "esmalte"
+  hexColor     String   
+  finish       String   
+  skinTone     String   
+  price        Decimal  @db.Decimal(10, 2)
+  imageUrl     String?  
+  createdAt    DateTime @default(now())
+}
+
+model SiteConfig {
+  id             Int      @id @default(1)
+  heroVideoUrl   String?  
+  heroTitle      String   @default("Sua beleza em evidência")
+  activeCampaign String?  
+  updatedAt      DateTime @updatedAt
+}
+
+model Admin {
+  id       String @id @default(cuid())
+  username String @unique
+  password String 
+}
