@@ -8,20 +8,20 @@ if (typeof window === 'undefined') {
   neonConfig.webSocketConstructor = ws
 }
 
+// URL que funcionou no driver puro
+const connectionString = "postgresql://neondb_owner:npg_unwEX2V3abDr@ep-steep-thunder-anpvhppy-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 const createPrisma = () => {
-  // Tenta o .env, se não achar, usa a string que funcionou no driver puro
-  const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_unwEX2V3abDr@ep-steep-thunder-anpvhppy-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
-
-  // Log para você ver no terminal se ele está pegando do .env ou do fallback
-  if (!process.env.DATABASE_URL) {
-    console.log("⚠️ Aviso: DATABASE_URL não lida do .env, usando fallback manual.");
-  }
-
+  console.log("🛠️ Tentando conexão com Adaptador Neon...");
+  
   const pool = new Pool({ connectionString })
   const adapter = new PrismaNeon(pool as any)
 
+  // No Prisma 6 + Driver Adapters:
+  // 1. NÃO passe datasources aqui.
+  // 2. O adapter já carrega a conexão do pool.
   return new PrismaClient({ adapter })
 }
 
