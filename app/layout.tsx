@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/app/components/layout/Navbar"; 
+import { Toaster } from 'sonner';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,6 +49,8 @@ export default function RootLayout({
           {children}
         </main>
         {/* Footer */}
+
+        <Toaster position="top-center" richColors/>
       </body>
     </html>
   );
