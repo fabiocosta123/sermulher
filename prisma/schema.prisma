@@ -24,8 +24,10 @@ model Product {
 
 model SiteConfig {
   id             Int      @id @default(1)
-  heroVideoUrl   String?  
   heroTitle      String   @default("Sua beleza em evidência")
+  heroSubtitle   String?  @default("Descubra a essência da sua beleza com nossos cosméticos exclusivos.")
+  heroImageUrl   String?  
+  heroVideoUrl   String?  
   activeCampaign String?  
   updatedAt      DateTime @updatedAt
 }
