@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { login } from "./actions";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("Tentando logar com:", { username, password });
-  };
+  
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  
+  const result = await login(username, password);
+
+  if (result?.error) {
+    alert(result.error); // Ou use o seu toast.error(result.error)
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

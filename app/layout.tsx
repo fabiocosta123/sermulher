@@ -4,6 +4,8 @@ import { Navbar } from "@/app/components/layout/Navbar";
 import { Footer } from "@/app/components/layout/Footer";
 import { getSiteConfig } from "./admin/products/actions";
 import { Toaster } from 'sonner';
+import { InstallButton } from "./components/PWA/InstallButton"
+import { OfflineBanner } from "./components/PWA/OfflineBanner"
 import "./globals.css";
 
 const inter = Inter({
@@ -48,13 +50,14 @@ export default async function RootLayout({
     >
       <link rel="apple-touch-icon" href="/icon-512x512.png" />
       <body className="min-h-full flex flex-col bg-[#FDFBF9] text-stone-900 font-sans">
+        <OfflineBanner />
         <Navbar />
         <main className="flex-grow">
           {children}
         </main>
         {/* Footer */}
         <Footer config={config} />
-
+        <InstallButton />
         <Toaster position="top-center" richColors/>
       </body>
     </html>
