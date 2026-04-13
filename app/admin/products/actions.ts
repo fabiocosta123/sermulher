@@ -73,10 +73,13 @@ export async function updateSiteConfig(data: any) {
     const payload = {
       heroTitle: data.heroTitle,
       heroSubtitle: data.heroSubtitle,
-      heroImageUrl: data.heroImageUrl,
-      // Novos campos aqui:
+      heroImageUrl: data.heroImageUrl,    
       featuredTitle: data.featuredTitle,
       featuredSubtitle: data.featuredSubtitle,
+      footerAddress: data.footerAddress,
+      footerWhatsapp: data.footerWhatsapp,
+      footerInstagram: data.footerInstagram,
+      footerEmail: data.footerEmail,
     }
 
     await prisma.siteConfig.upsert({

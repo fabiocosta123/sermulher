@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import "./globals.css";
 import { Navbar } from "@/app/components/layout/Navbar"; 
+import { Footer } from "@/app/components/layout/Footer";
+import { getSiteConfig } from "./admin/products/actions";
 import { Toaster } from 'sonner';
+import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,11 +35,12 @@ export const viewport: Viewport = {
   userScalable: false, 
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const config = await getSiteConfig()
   return (
     <html
       lang="pt-BR"
@@ -49,6 +52,7 @@ export default function RootLayout({
           {children}
         </main>
         {/* Footer */}
+        <Footer config={config} />
 
         <Toaster position="top-center" richColors/>
       </body>

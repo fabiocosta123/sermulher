@@ -34,6 +34,12 @@ model SiteConfig {
   
   heroVideoUrl     String?  
   activeCampaign   String?  
+
+  footerAddress   String?  @default("Registro, São Paulo")
+  footerWhatsapp  String?  @default("5513999999999")
+  footerInstagram String?  @default("sermulher_cosmeticos")
+  footerEmail     String?  @default("contato@sermulher.com.br")
+  
   updatedAt        DateTime @updatedAt
 }
 

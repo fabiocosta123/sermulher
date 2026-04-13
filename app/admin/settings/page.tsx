@@ -10,7 +10,11 @@ export default function SiteSettings() {
     heroSubtitle: '',
     heroImageUrl: '',
     featuredTitle: '',
-    featuredSubtitle: ''
+    featuredSubtitle: '',
+    footerAddress: '',
+    footerWhatsapp: '',
+    footerInstagram: '',
+    footerEmail: ''
   })
 
   // Carrega as configurações atuais ao abrir a página
@@ -21,7 +25,11 @@ export default function SiteSettings() {
         heroSubtitle: data.heroSubtitle || '',
         heroImageUrl: data.heroImageUrl || '',
         featuredTitle: data.featuredTitle || '',
-        featuredSubtitle: data.featuredSubtitle || ''
+        featuredSubtitle: data.featuredSubtitle || '',
+        footerAddress: data.footerAddress || '',
+        footerWhatsapp: data.footerWhatsapp || '',
+        footerInstagram: data.footerInstagram || '',
+        footerEmail: data.footerEmail || ''
       })
     })
   }, [])
@@ -118,6 +126,50 @@ export default function SiteSettings() {
                 value={config.featuredSubtitle}
                 onChange={(e) => setConfig({ ...config, featuredSubtitle: e.target.value })}
                 placeholder="Descreva a curadoria dos produtos..."
+              />
+            </div>
+          </div>
+        </section>
+        
+        {/*footer*/}
+        <section className="space-y-6 pt-6 border-t border-stone-100">
+          <h2 className="text-lg font-semibold text-rose-600 border-b border-rose-100 pb-2">Informações de Rodapé e Contato</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase">Endereço/Cidade</label>
+              <input
+                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
+                value={config.footerAddress}
+                onChange={(e) => setConfig({ ...config, footerAddress: e.target.value })}
+                placeholder="Ex: Registro, São Paulo"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase">WhatsApp (Apenas números)</label>
+              <input
+                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
+                value={config.footerWhatsapp}
+                onChange={(e) => setConfig({ ...config, footerWhatsapp: e.target.value })}
+                placeholder="Ex: 5513999999999"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase">Instagram (Usuário)</label>
+              <input
+                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
+                value={config.footerInstagram}
+                onChange={(e) => setConfig({ ...config, footerInstagram: e.target.value })}
+                placeholder="Ex: sermulher_cosmeticos"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-stone-500 uppercase">E-mail de Contato</label>
+              <input
+                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
+                value={config.footerEmail}
+                onChange={(e) => setConfig({ ...config, footerEmail: e.target.value })}
+                placeholder="Ex: contato@sermulher.com.br"
               />
             </div>
           </div>
