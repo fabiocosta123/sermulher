@@ -46,6 +46,7 @@ export default async function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
+      <link rel="apple-touch-icon" href="/icon-512x512.png" />
       <body className="min-h-full flex flex-col bg-[#FDFBF9] text-stone-900 font-sans">
         <Navbar />
         <main className="flex-grow">
