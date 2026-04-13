@@ -55,20 +55,20 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <h2 className="font-serif text-3xl text-stone-900 lg:text-4xl">
-            Essenciais para sua <span className="italic text-rose-600">Rotina</span>
+            {config?.featuredTitle || "Essenciais para sua Rotina"}
           </h2>
           <p className="mt-4 text-stone-500 max-w-2xl mx-auto">
-            Uma seleção curada de produtos que combinam alta tecnologia e cuidado artesanal.
+            {config?.featuredSubtitle || "Uma seleção curada de produtos que combinam alta tecnologia e cuidado artesanal."}
           </p>
 
           {loading ? (
             <div className="mt-12 grid grid-cols-2 gap-6 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="animate-pulse bg-stone-100 aspect-[3/4] rounded-2xl" />
               ))}
             </div>
           ) : (
-            <div className="mt-12 grid grid-cols-2 gap-8 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-2 gap-8 lg:grid-cols-4 flex flex-wrap justify-center">
               {products.map((product) => (
                 <div key={product.id} className="group cursor-pointer text-left">
                   <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-stone-50 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-rose-100/40">

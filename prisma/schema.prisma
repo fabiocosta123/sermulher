@@ -23,13 +23,18 @@ model Product {
 }
 
 model SiteConfig {
-  id             Int      @id @default(1)
-  heroTitle      String   @default("Sua beleza em evidência")
-  heroSubtitle   String?  @default("Descubra a essência da sua beleza com nossos cosméticos exclusivos.")
-  heroImageUrl   String?  
-  heroVideoUrl   String?  
-  activeCampaign String?  
-  updatedAt      DateTime @updatedAt
+  id               Int      @id @default(1)
+  heroTitle        String   @default("Sua beleza em evidência")
+  heroSubtitle     String?  @default("Descubra a essência da sua beleza com nossos cosméticos exclusivos.")
+  heroImageUrl     String?  
+  
+  
+  featuredTitle    String   @default("Essenciais para sua Rotina")
+  featuredSubtitle String?  @default("Uma seleção curada de produtos que combinam alta tecnologia e cuidado artesanal.")
+  
+  heroVideoUrl     String?  
+  activeCampaign   String?  
+  updatedAt        DateTime @updatedAt
 }
 
 model Admin {

@@ -1,20 +1,55 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { CldUploadWidget } from 'next-cloudinary'
-import { createProduct } from './actions'
-import { toast} from 'sonner';
+import { createProduct, getProductById } from './actions' 
+import { toast } from 'sonner';
 
 export default function NewProduct() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center text-stone-500">Carregando formulário...</div>}>
+      <ProductFormContent />
+    </Suspense>
+  )
+}
+
+function ProductFormContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const editId = searchParams.get('edit') // Captura o ?edit=ID da URL
+
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
     category: '',
-    hexColor: '#e11d48', // Padrão rose-600
+    hexColor: '#e11d48',
     finish: '',
     skinTone: '',
     price: '',
     imageUrl: ''
   })
+
+  // Efeito para carregar dados se estiver no modo edição
+  useEffect(() => {
+    if (editId) {
+      const loadProduct = async () => {
+        const product = await getProductById(editId)
+        if (product) {
+          setFormData({
+            name: product.name,
+            brand: product.brand,
+            category: product.category,
+            hexColor: product.hexColor,
+            finish: product.finish || '',
+            skinTone: product.skinTone || '',
+            price: product.price.toString(),
+            imageUrl: product.imageUrl || ''
+          })
+        }
+      }
+      loadProduct()
+    }
+  }, [editId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,15 +59,20 @@ export default function NewProduct() {
       return
     }
 
-    // Toast de carregamento enquanto o banco processa
-    const toastId = toast.loading("Salvando produto no SerMulher...")
+    const toastId = toast.loading(editId ? "Atualizando produto..." : "Salvando no SerMulher...")
 
-    const result = await createProduct(formData)
+    // Passamos o editId para a action saber que é um Update
+    const result = await createProduct({ ...formData, id: editId })
 
     if (result.success) {
-      toast.success("Produto cadastrado com sucesso!", { id: toastId })
-      // Limpar o formulário opcionalmente
-      setFormData({ ...formData, name: '', price: '', imageUrl: '' })
+      toast.success(editId ? "Atualizado com sucesso!" : "Cadastrado com sucesso!", { id: toastId })
+      
+      // Se for edição, volta para a lista. Se for novo, limpa.
+      if (editId) {
+        router.push('/admin/products/list')
+      } else {
+        setFormData({ name: '', brand: '', category: '', hexColor: '#e11d48', finish: '', skinTone: '', price: '', imageUrl: '' })
+      }
     } else {
       toast.error("Ops! Algo deu errado ao salvar.", { id: toastId })
     }
@@ -41,7 +81,7 @@ export default function NewProduct() {
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="font-serif text-3xl text-stone-900 mb-8 text-center">
-        Painel de Inventário <span className="text-rose-600">SerMulher</span>
+        {editId ? 'Editar Produto' : 'Painel de Inventário'} <span className="text-rose-600">SerMulher</span>
       </h1>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
@@ -80,6 +120,8 @@ export default function NewProduct() {
           <div>
             <label className="text-xs font-bold text-stone-500 uppercase">Nome</label>
             <input
+              required
+              value={formData.name} // IMPORTANTE: Valor vinculado
               className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none transition-all"
               placeholder="Ex: Batom Matte Velvet"
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -90,6 +132,8 @@ export default function NewProduct() {
             <div>
               <label className="text-xs font-bold text-stone-500 uppercase">Marca</label>
               <input
+                required
+                value={formData.brand}
                 className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
               />
@@ -97,7 +141,9 @@ export default function NewProduct() {
             <div>
               <label className="text-xs font-bold text-stone-500 uppercase">Preço</label>
               <input
+                required
                 type="number" step="0.01"
+                value={formData.price}
                 className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />
@@ -107,6 +153,8 @@ export default function NewProduct() {
           <div>
             <label className="text-xs font-bold text-stone-500 uppercase">Categoria</label>
             <select
+              required
+              value={formData.category}
               className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none bg-white"
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
@@ -122,6 +170,7 @@ export default function NewProduct() {
             <div>
               <label className="text-xs font-bold text-stone-500 uppercase">Acabamento</label>
               <input
+                value={formData.finish}
                 className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
                 placeholder="Ex: Matte"
                 onChange={(e) => setFormData({ ...formData, finish: e.target.value })}
@@ -146,12 +195,23 @@ export default function NewProduct() {
           </div>
         </div>
 
-        <button
-          type="submit"
-          className="col-span-1 md:col-span-2 mt-4 bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-rose-600 transition-all shadow-lg active:scale-[0.98]"
-        >
-          Finalizar Cadastro
-        </button>
+        <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
+           {editId && (
+             <button
+              type="button"
+              onClick={() => router.push('/admin/products/list')}
+              className="flex-1 bg-stone-100 text-stone-600 font-bold py-4 rounded-2xl hover:bg-stone-200 transition-all"
+             >
+              Cancelar
+             </button>
+           )}
+          <button
+            type="submit"
+            className="flex-[2] bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-rose-600 transition-all shadow-lg active:scale-[0.98]"
+          >
+            {editId ? 'Salvar Alterações' : 'Finalizar Cadastro'}
+          </button>
+        </div>
       </form>
     </div>
   )
