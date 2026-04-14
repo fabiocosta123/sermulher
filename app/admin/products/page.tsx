@@ -78,6 +78,8 @@ function ProductFormContent() {
     }
   }
 
+  
+
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="font-serif text-3xl text-stone-900 mb-8 text-center">
