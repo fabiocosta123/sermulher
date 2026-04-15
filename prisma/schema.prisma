@@ -11,14 +11,14 @@ datasource db {
 model Product {
   id        String   @id @default(cuid())
   name      String
-  brand     String?  // Adicionado para bater com seu formulário
-  price     Decimal  // Ou Float
+  brand     String?  
+  price     Decimal  
   imageUrl  String?
   category  String
   finish    String?
   hexColor  String?
   skinTone  String?
-  active    Boolean  @default(true) // O campo que estava faltando!
+  active    Boolean  @default(true) 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

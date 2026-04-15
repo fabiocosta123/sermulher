@@ -2,9 +2,9 @@ import { prisma } from '@/lib/prisma'
 import { ProductCard } from '@/app/components/products/ProductCard'
 
 export default async function ProductsPage() {
-  // Buscamos os produtos ativos do seu banco Neon
+  
   const products = await prisma.product.findMany({
-    //where: { active: true },
+    where: { active: true },
     orderBy: { createdAt: 'desc' }
   })
 

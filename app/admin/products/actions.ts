@@ -14,6 +14,7 @@ export async function createProduct(formData: any) {
       finish: formData.finish,
       skinTone: formData.skinTone,
       imageUrl: formData.imageUrl,
+      active: true
     }
 
     let product;
@@ -51,6 +52,7 @@ export async function createProduct(formData: any) {
 export async function getProducts() {
   try {
     const products = await prisma.product.findMany({
+      where: { active: true },
       orderBy: {
         createdAt: 'desc'
       }
@@ -89,6 +91,7 @@ export async function updateSiteConfig(data: any) {
     })
 
     revalidatePath('/')
+    revalidatePath('/products')
     return { success: true }
   } catch (error) {
     console.error("Erro ao atualizar config:", error)
@@ -127,7 +130,7 @@ export async function getProductById(id: string) {
 
     if (!product) return null
 
-    // Convertemos para tipos simples (Decimal -> Number) para evitar erro de serialização
+    
     return {
       ...product,
       price: Number(product.price),

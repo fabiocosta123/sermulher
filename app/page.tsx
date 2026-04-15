@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Hero } from "./components/hero/Hero"
-import { getProducts, getSiteConfig } from './admin/products/actions' // Importe o getSiteConfig
+import { getProducts, getSiteConfig } from './admin/products/actions'
+import { ProductCard } from '@/app/components/products/ProductCard'
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([])
@@ -30,7 +31,7 @@ export default function Home() {
           getProducts(),
           getSiteConfig()
         ])
-        
+
         setProducts(productsData)
         setConfig(configData)
       } catch (error) {
@@ -44,7 +45,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Agora o config existe e o Hero pode usar os dados do banco */}
+
       <Hero
         title={config?.heroTitle}
         subtitle={config?.heroSubtitle}
@@ -68,39 +69,19 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="mt-12 grid grid-cols-2 gap-8 lg:grid-cols-4 flex flex-wrap justify-center">
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {products.map((product) => (
-                <div key={product.id} className="group cursor-pointer text-left">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-stone-50 transition-all duration-500 group-hover:shadow-xl group-hover:shadow-rose-100/40">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-
-                    <div
-                      className="absolute bottom-3 right-3 h-4 w-4 rounded-full border border-white/50 shadow-sm"
-                      style={{ backgroundColor: product.hexColor }}
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
-                      {product.brand}
-                    </p>
-                    <h3 className="font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-sm font-bold text-stone-900">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                      </p>
-                      {product.finish && (
-                        <span className="text-[10px] text-stone-400 italic">• {product.finish}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    price: Number(product.price), 
+                    imageUrl: product.imageUrl || '',
+                    category: product.category,
+                    slug: product.id 
+                  }}
+                />
               ))}
             </div>
           )}
