@@ -2,20 +2,25 @@
 
 import { useState } from "react";
 import { login } from "./actions";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  
-const handleLogin = async (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   
   
   const result = await login(username, password);
 
   if (result?.error) {
-    alert(result.error); // Ou use o seu toast.error(result.error)
+    alert(result.error); 
+  }
+  else {
+    router.push("/admin/editor");
   }
 };
 

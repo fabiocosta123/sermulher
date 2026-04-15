@@ -1,220 +1,159 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { CldUploadWidget } from 'next-cloudinary'
-import { createProduct, getProductById } from './actions' 
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react'
+import { getProducts, deleteProduct } from './actions'
+import { toast } from 'sonner'
 
-export default function NewProduct() {
-  return (
-    <Suspense fallback={<div className="p-20 text-center text-stone-500">Carregando formulário...</div>}>
-      <ProductFormContent />
-    </Suspense>
-  )
-}
+export default function ProductList() {
+    const [products, setProducts] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
 
-function ProductFormContent() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const editId = searchParams.get('edit') // Captura o ?edit=ID da URL
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [productToDelete, setProductToDelete] = useState<any>(null)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    brand: '',
-    category: '',
-    hexColor: '#e11d48',
-    finish: '',
-    skinTone: '',
-    price: '',
-    imageUrl: ''
-  })
+    const confirmDelete = (product: any) => {
+        setProductToDelete(product)
+        setIsDeleteModalOpen(true)
+    }
 
-  // Efeito para carregar dados se estiver no modo edição
-  useEffect(() => {
-    if (editId) {
-      const loadProduct = async () => {
-        const product = await getProductById(editId)
-        if (product) {
-          setFormData({
-            name: product.name,
-            brand: product.brand,
-            category: product.category,
-            hexColor: product.hexColor,
-            finish: product.finish || '',
-            skinTone: product.skinTone || '',
-            price: product.price.toString(),
-            imageUrl: product.imageUrl || ''
-          })
+    // 3. Função que o botão do modal vai chamar
+    const handleExecuteDelete = async () => {
+        if (!productToDelete) return
+
+        setIsDeleteModalOpen(false)
+        const toastId = toast.loading("Removendo produto...")
+
+        const result = await deleteProduct(productToDelete.id)
+        if (result.success) {
+            setProducts(products.filter(p => p.id !== productToDelete.id))
+            toast.success(`${productToDelete.name} removido!`, { id: toastId })
+        } else {
+            toast.error("Erro ao excluir.", { id: toastId })
         }
-      }
-      loadProduct()
-    }
-  }, [editId])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.imageUrl) {
-      toast.error("Falta a foto do produto! 📸")
-      return
     }
 
-    const toastId = toast.loading(editId ? "Atualizando produto..." : "Salvando no SerMulher...")
+    const handleDelete = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir este produto?")) return
 
-    // Passamos o editId para a action saber que é um Update
-    const result = await createProduct({ ...formData, id: editId })
+        const toastId = toast.loading("Excluindo produto...")
 
-    if (result.success) {
-      toast.success(editId ? "Atualizado com sucesso!" : "Cadastrado com sucesso!", { id: toastId })
-      
-      // Se for edição, volta para a lista. Se for novo, limpa.
-      if (editId) {
-        router.push('/admin/products/list')
-      } else {
-        setFormData({ name: '', brand: '', category: '', hexColor: '#e11d48', finish: '', skinTone: '', price: '', imageUrl: '' })
-      }
-    } else {
-      toast.error("Ops! Algo deu errado ao salvar.", { id: toastId })
+        const result = await deleteProduct(id)
+
+        if (result.success) {
+            // Remove o produto da lista na tela sem precisar dar F5
+            setProducts(products.filter(p => p.id !== id))
+            toast.success("Produto removido do SerMulher!", { id: toastId })
+        } else {
+            toast.error("Erro ao excluir o produto.", { id: toastId })
+        }
     }
-  }
 
-  
+    useEffect(() => {
+        getProducts().then(data => {
+            setProducts(data)
+            setLoading(false)
+        })
+    }, [])
 
-  return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="font-serif text-3xl text-stone-900 mb-8 text-center">
-        {editId ? 'Editar Produto' : 'Painel de Inventário'} <span className="text-rose-600">SerMulher</span>
-      </h1>
+    return (
+        <div className="max-w-6xl mx-auto p-8">
+            <header className="flex justify-between items-center mb-10">
+                <div>
+                    <h1 className="font-serif text-3xl text-stone-900">Gerenciar Produtos</h1>
+                    <p className="text-stone-500">Visualize e edite os itens da sua vitrine</p>
+                </div>
+                <a href="/admin/products" className="bg-rose-600 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-rose-700 transition-all">
+                    + Novo Produto
+                </a>
+            </header>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-8 rounded-3xl shadow-sm border border-stone-100">
+            <div className="bg-white rounded-3xl border border-stone-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-stone-50 border-b border-stone-100">
+                        <tr>
+                            <th className="p-5 text-xs font-bold uppercase text-stone-400 tracking-widest">Produto</th>
+                            <th className="p-5 text-xs font-bold uppercase text-stone-400 tracking-widest">Categoria</th>
+                            <th className="p-5 text-xs font-bold uppercase text-stone-400 tracking-widest">Preço</th>
+                            <th className="p-5 text-xs font-bold uppercase text-stone-400 tracking-widest text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-50">
+                        {loading ? (
+                            <tr><td colSpan={4} className="p-10 text-center text-stone-400">Carregando produtos...</td></tr>
+                        ) : products.length === 0 ? (
+                            <tr><td colSpan={4} className="p-10 text-center text-stone-400">Nenhum produto encontrado.</td></tr>
+                        ) : (
+                            products.map((p) => (
+                                <tr key={p.id} className="hover:bg-stone-50/50 transition-colors group">
+                                    <td className="p-5">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-14 w-14 rounded-xl overflow-hidden bg-stone-100 border border-stone-100">
+                                                <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-stone-900">{p.name}</p>
+                                                <p className="text-xs text-stone-400 uppercase font-bold tracking-tighter">{p.brand}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-5 text-sm text-stone-600 capitalize">
+                                        {p.category}
+                                    </td>
+                                    <td className="p-5 text-sm font-bold text-stone-900">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.price)}
+                                    </td>
+                                    <td className="p-5 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => window.location.href = `/admin/editor?id=${p.id}`}
+                                                className="p-2 hover:bg-rose-50 rounded-lg text-stone-400 hover:text-rose-600 transition-all"
+                                            >
+                                                ✏️
+                                            </button>
+                                            
+                                            <button
+                                                onClick={() => confirmDelete(p)} // Chama o modal em vez do alert
+                                                className="p-2 hover:bg-red-50 rounded-lg text-stone-400 hover:text-red-600 transition-all"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
-        {/* COLUNA ESQUERDA: Upload de Imagem */}
-        <div className="space-y-4">
-          <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Foto do Produto</label>
-          <CldUploadWidget
-            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-            onSuccess={(result) => {
-              const info = result.info as any;
-              setFormData({ ...formData, imageUrl: info.secure_url });
-            }}
-          >
-            {({ open }) => (
-              <button
-                type="button"
-                onClick={() => open()}
-                className="w-full h-80 border-2 border-dashed border-stone-200 rounded-2xl flex flex-col items-center justify-center bg-stone-50 hover:bg-rose-50 hover:border-rose-300 transition-all overflow-hidden"
-              >
-                {formData.imageUrl ? (
-                  <img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="text-center p-4">
-                    <span className="text-3xl mb-2 block">📸</span>
-                    <p className="text-sm font-medium text-stone-600">Carregar Imagem</p>
-                  </div>
-                )}
-              </button>
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 animate-in fade-in zoom-in duration-200">
+                        <div className="text-center">
+                            <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">⚠️</span>
+                            </div>
+                            <h3 className="text-xl font-serif text-stone-900 mb-2">Excluir Produto?</h3>
+                            <p className="text-stone-500 text-sm mb-8">
+                                Você está prestes a remover <b>{productToDelete?.name}</b>. Esta ação não pode ser desfeita.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="flex-1 px-4 py-3 rounded-xl border border-stone-200 text-stone-600 font-semibold hover:bg-stone-50 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleExecuteDelete}
+                                    className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                                >
+                                    Sim, excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
-          </CldUploadWidget>
         </div>
-
-        {/* COLUNA DIREITA: Dados Técnicos */}
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="text-xs font-bold text-stone-500 uppercase">Nome</label>
-            <input
-              required
-              value={formData.name} // IMPORTANTE: Valor vinculado
-              className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none transition-all"
-              placeholder="Ex: Batom Matte Velvet"
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase">Marca</label>
-              <input
-                required
-                value={formData.brand}
-                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase">Preço</label>
-              <input
-                required
-                type="number" step="0.01"
-                value={formData.price}
-                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-stone-500 uppercase">Categoria</label>
-            <select
-              required
-              value={formData.category}
-              className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none bg-white"
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="">Selecione...</option>
-              <option value="batom">Batom</option>
-              <option value="sombra">Sombra</option>
-              <option value="esmalte">Esmalte</option>
-              <option value="skincare">Skincare</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase">Acabamento</label>
-              <input
-                value={formData.finish}
-                className="w-full p-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500 outline-none"
-                placeholder="Ex: Matte"
-                onChange={(e) => setFormData({ ...formData, finish: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-500 uppercase">Cor Principal</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={formData.hexColor}
-                  className="h-11 w-11 rounded-lg border border-stone-200 cursor-pointer"
-                  onChange={(e) => setFormData({ ...formData, hexColor: e.target.value })}
-                />
-                <input
-                  className="flex-1 p-2.5 rounded-xl border border-stone-200 text-sm uppercase bg-stone-50"
-                  value={formData.hexColor}
-                  readOnly
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-1 md:col-span-2 flex gap-4 mt-4">
-           {editId && (
-             <button
-              type="button"
-              onClick={() => router.push('/admin/products/list')}
-              className="flex-1 bg-stone-100 text-stone-600 font-bold py-4 rounded-2xl hover:bg-stone-200 transition-all"
-             >
-              Cancelar
-             </button>
-           )}
-          <button
-            type="submit"
-            className="flex-[2] bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-rose-600 transition-all shadow-lg active:scale-[0.98]"
-          >
-            {editId ? 'Salvar Alterações' : 'Finalizar Cadastro'}
-          </button>
-        </div>
-      </form>
-    </div>
-  )
+    )
 }

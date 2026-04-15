@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation'
 
 
 export async function login(username: string, password: string) {
-  // Verificação da senha que você escolheu
+  // Verificação da senha 
   if (username === 'admin' && password === 'adminsermulher') {
     const cookieStore = await cookies();
     
-    // Criamos o "crachá" de acesso (cookie)
+    
     cookieStore.set('sermulher_session', 'true', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -17,8 +17,8 @@ export async function login(username: string, password: string) {
       path: '/',
     });
 
-    // Login feito? Manda para a lista de produtos
-    redirect('/admin/products/list');
+    
+    redirect('/admin/editor');
   } else {
     return { error: "Usuário ou senha incorretos!" };
   }
