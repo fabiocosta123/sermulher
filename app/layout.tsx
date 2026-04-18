@@ -1,12 +1,13 @@
-import type { Metadata, Viewport } from "next";
+import "./globals.css";
 import { Inter, Playfair_Display } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import { Navbar } from "@/app/components/layout/Navbar"; 
 import { Footer } from "@/app/components/layout/Footer";
 import { getSiteConfig } from "./admin/products/actions";
 import { Toaster } from 'sonner';
 import { InstallButton } from "./components/PWA/InstallButton"
 import { OfflineBanner } from "./components/PWA/OfflineBanner"
-import "./globals.css";
+
 
 const inter = Inter({
   subsets: ["latin"],
