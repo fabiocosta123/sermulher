@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, RefreshCw, Sparkles } from "lucide-react";
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 
 interface AITryOnProps {
   isOpen: boolean;
@@ -14,117 +15,153 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [aiRecommendation, setAiRecommendation] = useState("Iniciando escaneamento facial...");
+  const [aiRecommendation, setAiRecommendation] = useState("Carregando modelos de IA...");
 
   useEffect(() => {
     if (!isOpen) return;
 
+    let faceLandmarker: FaceLandmarker;
+    let animationFrameId: number;
     let stream: MediaStream | null = null;
 
-    async function setupCamera() {
+    async function setupIA() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1280 }, 
-            height: { ideal: 720 },
-            facingMode: "user" 
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+        );
+
+        // 2. CARREGA O ARQUIVO NA PASTA PUBLIC
+        faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+          baseOptions: {
+            modelAssetPath: "/models/face_landmarker.task",
+            delegate: "GPU"
           },
-          audio: false,
+          runningMode: "VIDEO",
+          numFaces: 1
         });
+
+        // 3. Inicia a Câmera
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 1280, height: 720 },
+        });
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setIsLoading(false);
-          startAnalysis();
+          videoRef.current.onloadedmetadata = () => {
+            setIsLoading(false);
+            setAiRecommendation("Analisando seu rosto em tempo real...");
+            renderLoop(); // Inicia o processamento frame a frame
+          };
         }
       } catch (err) {
-        console.error("Erro ao acessar a câmera:", err);
-        setAiRecommendation("Erro ao acessar câmera. Verifique as permissões.");
+        console.error("Erro na IA:", err);
+        setAiRecommendation("Erro ao carregar os modelos de IA.");
       }
     }
 
-    function startAnalysis() {
-      setAiRecommendation("Analisando subtons e colorimetria...");
-      
-      setTimeout(() => {
-        if (productType === "Batons") {
-          setAiRecommendation("Detectamos subtons frios na sua pele. Este tom de batom harmoniza perfeitamente, trazendo luminosidade ao seu rosto.");
-        } else if (productType === "Tinturas") {
-          setAiRecommendation("Sua colorimetria sugere tons quentes. Esta tintura realçará o brilho natural dos seus olhos e pele.");
-        } else {
-          setAiRecommendation("Posicione-se em um local bem iluminado para uma análise mais precisa.");
+    // Função que roda continuamente para "pintar" o rosto
+    function renderLoop() {
+      if (!faceLandmarker || !videoRef.current || !canvasRef.current) return;
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+
+      if (ctx && video.readyState >= 2) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Executa a detecção no frame atual
+        const startTimeMs = performance.now();
+        const results = faceLandmarker.detectForVideo(video, startTimeMs);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (results.faceLandmarks && results.faceLandmarks.length > 0) {
+          const landmarks = results.faceLandmarks[0];
+
+          // Se for Batom, aplica o efeito visual
+          if (productType === "Batons") {
+            applyLipstickEffect(ctx, landmarks, productColor);
+          }
         }
-      }, 3500);
+      }
+      animationFrameId = requestAnimationFrame(renderLoop);
     }
 
-    setupCamera();
+    function applyLipstickEffect(ctx: CanvasRenderingContext2D, landmarks: any, color: string) {
+      // Índices oficiais do MediaPipe para o contorno dos lábios
+      const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291];
+      
+      ctx.beginPath();
+      ctx.fillStyle = `${color}4D`; // 30% de opacidade para parecer natural
+      ctx.filter = "blur(3px)"; // Suaviza as bordas do batom
+
+      lipIndices.forEach((index, i) => {
+        const point = landmarks[index];
+        if (i === 0) ctx.moveTo(point.x * ctx.canvas.width, point.y * ctx.canvas.height);
+        else ctx.lineTo(point.x * ctx.canvas.width, point.y * ctx.canvas.height);
+      });
+
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    setupIA();
 
     return () => {
-      stream?.getTracks().forEach(track => track.stop());
-      setAiRecommendation("Iniciando escaneamento facial...");
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      stream?.getTracks().forEach(t => t.stop());
+      faceLandmarker?.close();
     };
-  }, [isOpen, productType]);
+  }, [isOpen, productType, productColor]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
       <div className="relative w-full max-w-4xl aspect-video bg-stone-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-
-        {/* Header */}
+        
+        {/* Status Bar */}
         <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20 bg-gradient-to-b from-black/60 to-transparent">
           <div className="flex items-center gap-3">
-            <div className="bg-rose-500 w-2 h-2 rounded-full animate-ping" />
+            <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'}`} />
             <div>
-              <h2 className="text-white font-serif text-xl tracking-wide">Provador Virtual</h2>
-              <p className="text-stone-300 text-[10px] uppercase tracking-[0.2em]">IA de Colorimetria Ativa</p>
+              <h2 className="text-white font-serif text-xl">Provador Virtual</h2>
+              <p className="text-stone-400 text-[10px] uppercase tracking-widest">Processamento Neural Ativo</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-white hover:rotate-90 transition-transform p-2 bg-white/10 rounded-full">
+          <button onClick={onClose} className="text-white p-2 bg-white/10 rounded-full hover:bg-rose-500 transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        {/* Área da Câmera */}
+        {/* Video & Drawing Area */}
         <div className="relative w-full h-full flex items-center justify-center">
           {isLoading && (
             <div className="flex flex-col items-center gap-4 text-white z-10">
               <RefreshCw className="animate-spin text-rose-400" size={32} />
-              <span className="text-[10px] uppercase tracking-[0.3em]">Calibrando Sensor...</span>
+              <span className="text-[10px] uppercase tracking-widest">Sincronizando IA...</span>
             </div>
           )}
-
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover grayscale-[0.2] contrast-[1.1]"
-          />
-
+          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-          
-          {!isLoading && (
-            <div className="absolute inset-0 border-[40px] border-black/20 pointer-events-none flex items-center justify-center">
-               <div className="w-64 h-80 border border-white/20 rounded-[100px] border-dashed" />
-            </div>
-          )}
         </div>
 
-        {/* Rodapé com a RESPOSTA DA IA */}
+        {/* Rodapé Dinâmico */}
         <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
           <div className="flex items-start gap-4 border-l-2 border-rose-500/50 pl-6">
             <div className="bg-rose-500/20 p-2 rounded-lg">
-              {/* Usando o Sparkles que já estava importado */}
               <Sparkles size={20} className="text-rose-300" />
             </div>
             <div className="max-w-md">
-              <p className="text-white text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Análise da Especialista:</p>
+              <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-1">Feedback da IA:</p>
               <p className="text-stone-200 text-[13px] leading-relaxed italic font-light">
                 "{aiRecommendation}"
               </p>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
