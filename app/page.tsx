@@ -1,14 +1,15 @@
 import { Hero } from "@/components/Hero";
+import { ProductHighlight } from "@/components/ProductHighlight"
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      {/* Aqui você pode adicionar outros componentes como Navbar futuramente */}
-      
-      <Hero />
 
-      {/* Exemplo de uma seção futura abaixo do Hero */}
-      {/* <ProductGrid /> */}
+
+      <Hero />
+      <ProductHighlight />
+
+
     </main>
   );
 }
