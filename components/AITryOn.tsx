@@ -16,6 +16,9 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [aiRecommendation, setAiRecommendation] = useState("Iniciando escaneamento facial...");
+  
+  // Ref para controlar o estado da mensagem sem causar re-renderizações infinitas no loop
+  const analysisStatus = useRef<"idle" | "analyzing" | "finished">("idle");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -64,51 +67,81 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
       const ctx = canvas.getContext("2d");
 
       if (ctx && video.readyState >= 2) {
-        // CORREÇÃO: Alinha o tamanho do desenho ao tamanho VISÍVEL na tela do celular
-        canvas.width = video.clientWidth;
-        canvas.height = video.clientHeight;
+        // Ajustamos o canvas para o tamanho visível do elemento de vídeo
+        const displayWidth = video.clientWidth;
+        const displayHeight = video.clientHeight;
+        
+        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+          canvas.width = displayWidth;
+          canvas.height = displayHeight;
+        }
 
         const results = faceLandmarker.detectForVideo(video, performance.now());
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (results.faceLandmarks && results.faceLandmarks.length > 0) {
           const landmarks = results.faceLandmarks[0];
 
-          // LÓGICA DE MENSAGEM DINÂMICA
-          if (aiRecommendation.includes("Iniciando")) {
-             setAiRecommendation("Analisando subtons da pele em tempo real...");
-             setTimeout(() => {
-                setAiRecommendation(
-                  productType === "Batons" 
-                  ? "Análise concluída: Seu subtom é frio. Este tom realça sua pele!" 
-                  : "Dica: Mantenha iluminação frontal para melhor resultado."
-                );
-             }, 3000);
+          // --- LOGICA DE MENSAGEM COM TRAVA ---
+          if (analysisStatus.current === "idle") {
+            analysisStatus.current = "analyzing";
+            setAiRecommendation("Analisando subtons da pele...");
+            
+            setTimeout(() => {
+              setAiRecommendation(
+                productType === "Batons" 
+                ? "Análise concluída: Seu subtom é frio. Este tom realça sua pele!" 
+                : "Dica: Mantenha iluminação frontal para melhor resultado."
+              );
+              analysisStatus.current = "finished";
+            }, 4000);
           }
 
           if (productType === "Batons") {
-            applyLipstickEffect(ctx, landmarks, productColor, canvas.width, canvas.height);
+            // Passamos as dimensões do vídeo nativo e do display para calcular o mapeamento
+            applyLipstickEffect(ctx, landmarks, productColor, video, displayWidth, displayHeight);
           }
         }
       }
       animationFrameId = requestAnimationFrame(renderLoop);
     }
 
-    function applyLipstickEffect(ctx: CanvasRenderingContext2D, landmarks: any, color: string, w: number, h: number) {
+    function applyLipstickEffect(
+      ctx: CanvasRenderingContext2D, 
+      landmarks: any, 
+      color: string, 
+      video: HTMLVideoElement,
+      canvasW: number, 
+      canvasH: number
+    ) {
       const lipIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291];
       
+      // Cálculo para compensar o 'object-fit: cover'
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const canvasAspect = canvasW / canvasH;
+      let scaleX = 1, scaleY = 1, offsetX = 0, offsetY = 0;
+
+      if (canvasAspect > videoAspect) {
+        scaleX = canvasW;
+        scaleY = canvasW / videoAspect;
+        offsetY = (canvasH - scaleY) / 2;
+      } else {
+        scaleY = canvasH;
+        scaleX = canvasH * videoAspect;
+        offsetX = (canvasW - scaleX) / 2;
+      }
+
+      ctx.save();
       ctx.beginPath();
-      // Ajuste de transparência e suavização (blur)
       ctx.globalAlpha = 0.6; 
       ctx.fillStyle = color;
       ctx.filter = "blur(3px)"; 
 
       lipIndices.forEach((index, i) => {
         const point = landmarks[index];
-        // Multiplica a coordenada percentual (0 a 1) pelo tamanho real do elemento na tela
-        const px = point.x * w;
-        const py = point.y * h;
+        // Mapeamento corrigido considerando o corte do object-fit
+        const px = point.x * scaleX + offsetX;
+        const py = point.y * scaleY + offsetY;
         
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
@@ -116,7 +149,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
 
       ctx.closePath();
       ctx.fill();
-      ctx.globalAlpha = 1.0;
+      ctx.restore();
     }
 
     setupIA();
@@ -125,6 +158,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       stream?.getTracks().forEach(t => t.stop());
       faceLandmarker?.close();
+      analysisStatus.current = "idle";
     };
   }, [isOpen, productType, productColor]);
 
@@ -139,7 +173,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
             <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'}`} />
             <div>
               <h2 className="text-white font-serif text-xl tracking-tight">Provador Virtual</h2>
-              <p className="text-stone-400 text-[10px] uppercase tracking-widest font-bold text-rose-300">Live AI Analysis</p>
+              <p className="text-rose-300 text-[10px] uppercase tracking-widest font-bold">Análise Facial Ativa</p>
             </div>
           </div>
           <button onClick={onClose} className="text-white p-2 bg-white/10 rounded-full hover:bg-rose-500 transition-colors">
@@ -147,15 +181,23 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
           </button>
         </div>
 
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
           {isLoading && (
             <div className="flex flex-col items-center gap-4 text-white z-10">
               <RefreshCw className="animate-spin text-rose-400" size={32} />
-              <span className="text-[10px] uppercase tracking-[0.3em]">Calibrando Visão...</span>
+              <span className="text-[10px] uppercase tracking-widest">Sincronizando IA...</span>
             </div>
           )}
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-          <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            className="w-full h-full object-cover" 
+          />
+          <canvas 
+            ref={canvasRef} 
+            className="absolute top-0 left-0 w-full h-full pointer-events-none" 
+          />
         </div>
 
         <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
@@ -164,7 +206,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
               <Sparkles size={20} className="text-rose-300" />
             </div>
             <div className="max-w-md">
-              <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-1">Dica da Especialista:</p>
+              <p className="text-white text-[10px] font-bold uppercase tracking-widest mb-1">Feedback da IA:</p>
               <p className="text-stone-200 text-[13px] leading-relaxed italic font-light drop-shadow-sm">
                 "{aiRecommendation}"
               </p>
