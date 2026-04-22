@@ -1,64 +1,32 @@
-import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
-import { Navbar } from "@/app/components/layout/Navbar"; 
-import { Footer } from "@/app/components/layout/Footer";
-import { getSiteConfig } from "./admin/products/actions";
-import { Toaster } from 'sonner';
-import { InstallButton } from "./components/PWA/InstallButton"
-import { OfflineBanner } from "./components/PWA/OfflineBanner"
+
 import "./globals.css";
+import { Navbar } from "../components/Navbar"
+import type { Metadata } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
+import { Footer } from "@/components/Footer";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  title: "SerMulher | Cosméticos & Beleza",
-  description: "A ciência por trás da sua melhor versão. Produtos de beleza premium e skincare.",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "SerMulher",
-  },
+  title: "SerMulher | Beleza em Evidência",
+  description: "Produtos formulados para realçar a sua melhor versão.",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#FDFBF9", // Cor de fundo do site para a barra do navegador
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false, 
-};
-
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const config = await getSiteConfig()
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
-    >
-      <link rel="apple-touch-icon" href="/icon-512x512.png" />
-      <body className="min-h-full flex flex-col bg-[#FDFBF9] text-stone-900 font-sans">
-        <OfflineBanner />
+    <html lang="pt-BR">
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-[#FDFBF9] text-stone-900`}>
         <Navbar />
-        <main className="flex-grow">
+
+
+        <div className="pt-24 lg:pt-28">
           {children}
-        </main>
-        {/* Footer */}
-        <Footer config={config} />
-        <InstallButton />
-        <Toaster position="top-center" richColors/>
+        </div>
+
+        <Footer />
+
       </body>
     </html>
   );
