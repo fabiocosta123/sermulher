@@ -3,7 +3,7 @@ import "./globals.css";
 import { Navbar } from "../components/Navbar"
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import Image from "next/image";
+import { Footer } from "@/components/Footer";
 
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -24,6 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="pt-24 lg:pt-28">
           {children}
         </div>
+
+        <Footer />
 
       </body>
     </html>
