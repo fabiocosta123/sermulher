@@ -5,16 +5,25 @@ import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/contexts/CartContext";
 import { Header } from "@/components/Header";
 import { CartSidebar } from "@/components/CartSidebar";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({ 
-  subsets: ["latin"], 
-  variable: "--font-playfair" 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair"
 });
 
-export const metadata: Metadata = {
-  title: "Ser Mulher | Beleza em Evidência",
-  description: "Produtos formulados para realçar a sua melhor versão.",
+export const metadata = {
+  title: "Ser Mulher",
+  description: "Provador Virtual e Cosméticos",
+  manifest: "/manifest.json", // <--- Adicione esta linha
+  themeColor: "#000000",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ser Mulher",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,14 +31,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-br" className={`${inter.variable} ${playfair.variable}`}>
       <body className="bg-stone-50 text-stone-900 antialiased">
         <CartProvider>
-          {/* O componente da Sidebar precisa estar aqui para ser controlado pelo contexto */}
+          
           <CartSidebar />
-          
+
           <Header />
+
           
-          {/* Ajustado pt-16 para mobile e lg:pt-24 para acompanhar sua Navbar alta */}
-          <main className="min-h-screen pt-20 lg:pt-24"> 
+          <main className="min-h-screen pt-20 lg:pt-24">
             {children}
+            <InstallPrompt />
           </main>
 
           <Footer />
