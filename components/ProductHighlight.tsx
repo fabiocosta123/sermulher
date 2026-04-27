@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Eye } from "lucide-react";
 
 
 const products = [
@@ -47,10 +47,11 @@ export function ProductHighlight() {
                 {/* Overlay de Ações */}
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-2">
                   <Link 
-                    href="/produtos"
+                    href={`/produtos/${product.id}`}
                     className="w-32 bg-white py-2 text-[10px] font-bold uppercase tracking-tighter shadow-sm text-center hover:bg-stone-900 hover:text-white transition-colors"
                   >
-                    Ver Detalhes
+                    <Eye size={14} />
+                    Detalhes
                   </Link>
                   <button 
                     onClick={() => addToCart(product as any)}
