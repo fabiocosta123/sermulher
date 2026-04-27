@@ -8,7 +8,10 @@ export interface Product {
   subtone: 'frio' | 'quente' | 'neutro';
   category: 'Batons' | 'Tinturas' | 'Blush' | 'Base';
   image: string;
+  quantity?: number
 }
+
+export interface CartItem extends Product { quantity: number; }
 
 export const PRODUCT_MOCK: Product[] = [
   // --- BATONS (Manutenção das cores originais com foco em subtons) ---
