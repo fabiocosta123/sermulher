@@ -4,9 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag, Menu, X } from "lucide-react"; 
+import { useCart } from "@/contexts/CartContext";
 
-export function Navbar() {
+export function Header() { // Renomeado para Header para manter a consistência do layout
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { totalItems, setIsCartOpen } = useCart(); // Pegando os dados do contexto
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -16,10 +18,10 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 z-50 w-full bg-[#FDFBF9]/95 backdrop-blur-sm border-b border-stone-100 shadow-sm transition-all">
+    <nav className="fixed top-0 left-0 z-[90] w-full bg-[#FDFBF9]/95 backdrop-blur-sm border-b border-stone-100 shadow-sm transition-all">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 h-20 lg:h-24">
         
-        {/* BOTÃO HAMBÚRGUER (Aparece apenas em telas pequenas) */}
+        {/* BOTÃO HAMBÚRGUER (Mobile) */}
         <div className="flex md:hidden">
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -44,7 +46,7 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* LINKS DESKTOP (Escondidos em telas pequenas) */}
+        {/* LINKS DESKTOP */}
         <div className="hidden md:flex items-center gap-x-10">
           {navLinks.map((link) => (
             <Link
@@ -57,13 +59,20 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* CARRINHO */}
+        {/* CARRINHO (Botão Refatorado) */}
         <div className="flex items-center">
-          <button className="relative p-2 text-stone-900 hover:text-stone-600 transition-colors group">
+          <button 
+            onClick={() => setIsCartOpen(true)} // Agora abre a sidebar lateral
+            className="relative p-2 text-stone-900 hover:text-rose-600 transition-colors group"
+          >
             <ShoppingBag size={24} strokeWidth={1.5} />
-            <span className="absolute top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white group-hover:bg-rose-600 transition-colors">
-              0
-            </span>
+            
+            {/* Contador Dinâmico do Contexto */}
+            {totalItems > 0 && (
+              <span className="absolute top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white group-hover:bg-rose-600 transition-all animate-in zoom-in">
+                {totalItems}
+              </span>
+            )}
           </button>
         </div>
       </div>
