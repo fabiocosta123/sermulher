@@ -1,12 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Sparkles, ShoppingCart } from "lucide-react";
+import { X, Sparkles, ShoppingCart, Loader2 } from "lucide-react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { PRODUCT_MOCK, Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 
+// --- CONSTANTES E UTILITÁRIOS ---
 const LIP_INDICES = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291];
+
+/**
+ * Calcula o subtom baseado no equilíbrio entre canais quentes e frios
+ */
+const calculateSubtone = (r: number, g: number, b: number): "frio" | "quente" | "neutro" => {
+  const balance = r - b;
+  if (balance > 12) return "quente";
+  if (balance < -2) return "frio";
+  return "neutro";
+};
 
 interface AITryOnProps {
   isOpen: boolean;
@@ -15,50 +26,45 @@ interface AITryOnProps {
   productColor?: string;
 }
 
-const getSkinSubtone = (r: number, g: number, b: number): "frio" | "quente" | "neutro" => {
-  const yellowRange = (r + g) / 2;
-  if (yellowRange > b + 30) return "quente";
-  if (b > (r + g) / 2.5) return "frio";
-  return "neutro";
-};
-
 export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c" }: AITryOnProps) {
   const { addToCart } = useCart();
+  
+  // Refs para performance e controle de ciclo de vida
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+  const analysisStatus = useRef<"idle" | "analyzing" | "finished">("idle");
+  const frameCounter = useRef(0);
+  const isMounted = useRef(true);
+
+  // Estados da UI
   const [isLoading, setIsLoading] = useState(true);
   const [aiRecommendation, setAiRecommendation] = useState("Iniciando escaneamento facial...");
   const [appliedColor, setAppliedColor] = useState(productColor);
   const [recommendedProduct, setRecommendedProduct] = useState<Product | null>(null);
 
-  const colorRef = useRef(appliedColor);
-  const typeRef = useRef(productType);
-  const analysisStatus = useRef<"idle" | "analyzing" | "finished">("idle");
-  const frameCounter = useRef(0);
-  const isMounted = useRef(true);
-
-  useEffect(() => { colorRef.current = appliedColor; }, [appliedColor]);
-  useEffect(() => { typeRef.current = productType; }, [productType]);
-
+  /**
+   * Desenha o batom com efeito de blend realista
+   */
   const drawLipstick = useCallback((ctx: CanvasRenderingContext2D, landmarks: any, color: string, video: HTMLVideoElement) => {
     const { width: w, height: h } = ctx.canvas;
     const videoAspect = video.videoWidth / video.videoHeight;
     const canvasAspect = w / h;
+    
     let scaleX = w, scaleY = h, offsetX = 0, offsetY = 0;
-
     if (canvasAspect > videoAspect) {
-      scaleY = w / videoAspect; offsetY = (h - scaleY) / 2;
+      scaleY = w / videoAspect;
+      offsetY = (h - scaleY) / 2;
     } else {
-      scaleX = h * videoAspect; offsetX = (w - scaleX) / 2;
+      scaleX = h * videoAspect;
+      offsetX = (w - scaleX) / 2;
     }
 
     ctx.save();
     ctx.globalCompositeOperation = "multiply";
     ctx.beginPath();
-    ctx.globalAlpha = 0.6; 
+    ctx.globalAlpha = 0.65; 
     ctx.fillStyle = color;
-    ctx.filter = "blur(3px)";
+    ctx.filter = "blur(2.5px)";
 
     LIP_INDICES.forEach((index, i) => {
       const p = landmarks[index];
@@ -73,6 +79,54 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
     ctx.restore();
   }, []);
 
+  /**
+   * Lógica principal de análise e recomendação
+   */
+  const performAIVision = useCallback((landmarks: any, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    if (analysisStatus.current !== "analyzing") return;
+
+    frameCounter.current += 1;
+    
+    // Aguarda 45 frames para estabilizar a luz da câmera
+    if (frameCounter.current > 45) {
+      const point = landmarks[234]; // Ponto da bochecha lateral
+      const px = Math.floor(point.x * canvas.width);
+      const py = Math.floor(point.y * canvas.height);
+
+      // Amostragem de área 5x5 para evitar ruído de pixels isolados
+      const size = 5;
+      const imageData = ctx.getImageData(px - 2, py - 2, size, size).data;
+      
+      let r = 0, g = 0, b = 0;
+      for (let i = 0; i < imageData.length; i += 4) {
+        r += imageData[i]; g += imageData[i+1]; b += imageData[i+2];
+      }
+      
+      const count = imageData.length / 4;
+      const subtone = calculateSubtone(r / count, g / count, b / count);
+      const normalizedType = productType.toLowerCase().replace(/s$/, "");
+
+      // FILTRAGEM DINÂMICA: Busca todos os produtos que combinam
+      const matches = PRODUCT_MOCK.filter(p => 
+        p.subtone === subtone && 
+        p.category.toLowerCase().replace(/s$/, "") === normalizedType
+      );
+
+      // SORTEIO: Se houver vários, escolhe um aleatório para variar a experiência
+      const selected = matches.length > 0 
+        ? matches[Math.floor(Math.random() * matches.length)]
+        : PRODUCT_MOCK.find(p => p.category.toLowerCase().replace(/s$/, "") === normalizedType);
+
+      if (selected) {
+        setAppliedColor(selected.color);
+        setRecommendedProduct(selected);
+        setAiRecommendation(`Análise concluída! Identificamos subtom ${subtone}. O ${selected.name} é a escolha perfeita para você.`);
+      }
+
+      analysisStatus.current = "finished";
+    }
+  }, [productType]);
+
   useEffect(() => {
     isMounted.current = true;
     if (!isOpen) return;
@@ -80,181 +134,132 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
     analysisStatus.current = "idle";
     frameCounter.current = 0;
 
-    const originalInfo = console.info;
-    console.info = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes("XNNPACK")) return;
-      originalInfo(...args);
-    };
-
     let faceLandmarker: FaceLandmarker;
     let animationFrameId: number;
     let stream: MediaStream | null = null;
-    let isProcessing = false;
 
-    const setupIA = async () => {
+    const init = async () => {
       try {
-        const filesetResolver = await FilesetResolver.forVisionTasks(
+        const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
         );
-        faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
+        
+        faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: { modelAssetPath: "/models/face_landmarker.task", delegate: "GPU" },
           runningMode: "VIDEO",
           numFaces: 1
         });
 
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: { facingMode: "user", width: 1280, height: 720 },
         });
 
         if (videoRef.current && isMounted.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             setIsLoading(false);
-            renderLoop();
+            loop();
           };
         }
       } catch (err) {
-        if (isMounted.current) setAiRecommendation("Erro de Câmera.");
+        setAiRecommendation("Erro ao acessar câmera ou carregar IA.");
       }
     };
 
-    const renderLoop = () => {
-      if (!isMounted.current || !faceLandmarker || !videoRef.current || !canvasRef.current || isProcessing) {
-        animationFrameId = requestAnimationFrame(renderLoop);
-        return;
-      }
+    const loop = () => {
+      if (!isMounted.current || !videoRef.current || !canvasRef.current || !faceLandmarker) return;
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      if (ctx && video.readyState >= 3 && video.videoWidth > 0) {
-        if (canvas.width !== video.offsetWidth || canvas.height !== video.offsetHeight) {
+      if (ctx && video.readyState >= 3) {
+        if (canvas.width !== video.offsetWidth) {
           canvas.width = video.offsetWidth;
           canvas.height = video.offsetHeight;
         }
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        try {
-          isProcessing = true;
-          const timestamp = Math.floor(performance.now());
-          const results = faceLandmarker.detectForVideo(video, timestamp);
+        const results = faceLandmarker.detectForVideo(video, performance.now());
 
-          if (results?.faceLandmarks?.length > 0) {
-            const landmarks = results.faceLandmarks[0];
+        if (results?.faceLandmarks?.[0]) {
+          const landmarks = results.faceLandmarks[0];
 
-            if (analysisStatus.current === "idle") {
-              analysisStatus.current = "analyzing";
-              setAiRecommendation("Analisando subtom da pele...");
-            }
-
-            if (analysisStatus.current === "analyzing") {
-              frameCounter.current += 1;
-              if (frameCounter.current > 45) {
-                const point = landmarks[234];
-                const px = Math.min(Math.max(Math.floor(point.x * canvas.width), 0), canvas.width - 1);
-                const py = Math.min(Math.max(Math.floor(point.y * canvas.height), 0), canvas.height - 1);
-                const pixelData = ctx.getImageData(px, py, 1, 1).data;
-                const subtone = getSkinSubtone(pixelData[0], pixelData[1], pixelData[2]);
-                
-                const normalizedType = typeRef.current.toLowerCase().replace(/s$/, ""); 
-                const recommended = PRODUCT_MOCK.find(p => {
-                  const pCat = p.category.toLowerCase().replace(/s$/, "");
-                  return p.subtone === subtone && pCat === normalizedType;
-                });
-
-                if (recommended) {
-                  setAppliedColor(recommended.color);
-                  setRecommendedProduct(recommended);
-                  setAiRecommendation(`Subtom ${subtone} detectado. Sugerimos: ${recommended.name}!`);
-                } else {
-                  const fallback = PRODUCT_MOCK.find(p => p.category.toLowerCase().replace(/s$/, "") === normalizedType);
-                  if (fallback) {
-                    setAppliedColor(fallback.color);
-                    setRecommendedProduct(fallback);
-                    setAiRecommendation(`Subtom ${subtone} detectado. Harmoniza com ${fallback.name}.`);
-                  }
-                }
-                analysisStatus.current = "finished";
-              }
-            }
-
-            if (typeRef.current === "Batons") {
-              drawLipstick(ctx, landmarks, colorRef.current, video);
-            }
+          if (analysisStatus.current === "idle") {
+            analysisStatus.current = "analyzing";
+            setAiRecommendation("Escaneando sua pele para recomendação personalizada...");
           }
-        } catch (e) {
-          // Silent catch
-        } finally {
-          isProcessing = false;
+
+          performAIVision(landmarks, ctx, canvas);
+
+          if (productType === "Batons") {
+            // Usa a cor recomendada pela IA se já terminou, senão a cor padrão
+            drawLipstick(ctx, landmarks, analysisStatus.current === "finished" ? appliedColor : productColor, video);
+          }
         }
       }
-      animationFrameId = requestAnimationFrame(renderLoop);
+      animationFrameId = requestAnimationFrame(loop);
     };
 
-    setupIA();
+    init();
 
     return () => {
       isMounted.current = false;
-      console.info = originalInfo;
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (stream) stream.getTracks().forEach(t => t.stop());
       if (faceLandmarker) faceLandmarker.close();
     };
-  }, [isOpen, drawLipstick]);
+  }, [isOpen, productType, productColor, appliedColor, drawLipstick, performAIVision]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black">
-      <div className="relative w-full h-[100dvh] md:max-w-4xl md:h-[80vh] bg-stone-900 md:rounded-3xl overflow-hidden shadow-2xl">
+      <div className="relative w-full h-[100dvh] md:max-w-4xl md:h-[85vh] bg-stone-900 md:rounded-3xl overflow-hidden shadow-2xl">
         
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-          <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
+        {/* Camada de Vídeo e Canvas */}
+        <div className="absolute inset-0">
+          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover grayscale-[0.2]" />
+          <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-10 pointer-events-none" />
+          {isLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-900 z-50">
+              <Loader2 className="text-rose-500 animate-spin mb-4" size={48} />
+              <p className="text-stone-400 font-light tracking-widest uppercase text-xs">Carregando Vision AI...</p>
+            </div>
+          )}
         </div>
 
-        <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20 bg-gradient-to-b from-black/80 to-transparent">
+        {/* Header */}
+        <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20 bg-gradient-to-b from-black/90 to-transparent">
           <div className="flex items-center gap-4">
-            {analysisStatus.current === "finished" ? (
-              <div 
-                className="w-10 h-10 rounded-full border-2 border-white shadow-xl animate-bounce"
-                style={{ backgroundColor: appliedColor }} 
-              />
-            ) : (
-              <div className={`w-3 h-3 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]'}`} />
-            )}
+            <div className={`w-12 h-12 rounded-full border-2 border-white/50 transition-all duration-700 ${analysisStatus.current === 'finished' ? 'scale-110 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : ''}`}
+                 style={{ backgroundColor: appliedColor }} />
             <div>
-              <h2 className="text-white font-serif text-lg leading-none">Provador Virtual</h2>
-              <span className="text-rose-400 text-[10px] font-bold uppercase tracking-widest">{productType}</span>
+              <h2 className="text-white font-serif text-xl">Ser Mulher</h2>
+              <p className="text-rose-400 text-[10px] font-bold uppercase tracking-tighter">Smart Mirror Analysis</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-white p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+          <button onClick={onClose} className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-all">
             <X size={24} />
           </button>
         </div>
 
-        <div className="absolute bottom-8 left-0 w-full px-6 z-20 flex flex-col gap-4 items-center">
-          {/* Card de Recomendação */}
-          <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 w-full max-w-lg flex items-center gap-4 shadow-2xl">
-             <div className="bg-rose-500/20 p-2 rounded-xl">
-                <Sparkles size={20} className="text-rose-300" />
-             </div>
-             <p className="text-white text-sm font-light italic leading-snug">{aiRecommendation}</p>
+        {/* Painel Inferior */}
+        <div className="absolute bottom-0 left-0 w-full p-6 z-20 space-y-4">
+          <div className="bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="bg-rose-500/20 p-2 rounded-lg">
+              <Sparkles className="text-rose-300" size={20} />
+            </div>
+            <p className="text-white text-sm font-light leading-snug">{aiRecommendation}</p>
           </div>
 
-          {/* Botão de Compra Dinâmico */}
           {analysisStatus.current === "finished" && recommendedProduct && (
             <button
-              onClick={() => {
-                addToCart(recommendedProduct);
-                onClose();
-              }}
-              className="w-full max-w-lg bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 transform transition active:scale-95 animate-in slide-in-from-bottom-4 duration-500"
+              onClick={() => { addToCart(recommendedProduct); onClose(); }}
+              className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg"
             >
               <ShoppingCart size={20} />
-              Comprar {recommendedProduct.name}
+              Adicionar {recommendedProduct.name} à Sacola
             </button>
           )}
         </div>
