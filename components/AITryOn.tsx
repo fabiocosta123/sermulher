@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, RefreshCw, Sparkles } from "lucide-react";
+import { X, Sparkles, ShoppingCart } from "lucide-react";
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { PRODUCT_MOCK } from "@/types/product";
+import { PRODUCT_MOCK, Product } from "@/types/product";
+import { useCart } from "@/contexts/CartContext";
 
 const LIP_INDICES = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291];
 
@@ -22,11 +23,14 @@ const getSkinSubtone = (r: number, g: number, b: number): "frio" | "quente" | "n
 };
 
 export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c" }: AITryOnProps) {
+  const { addToCart } = useCart();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [aiRecommendation, setAiRecommendation] = useState("Iniciando escaneamento facial...");
   const [appliedColor, setAppliedColor] = useState(productColor);
+  const [recommendedProduct, setRecommendedProduct] = useState<Product | null>(null);
 
   const colorRef = useRef(appliedColor);
   const typeRef = useRef(productType);
@@ -76,7 +80,6 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
     analysisStatus.current = "idle";
     frameCounter.current = 0;
 
-    // Filtro de logs para limpar o console
     const originalInfo = console.info;
     console.info = (...args) => {
       if (typeof args[0] === 'string' && args[0].includes("XNNPACK")) return;
@@ -163,11 +166,13 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
 
                 if (recommended) {
                   setAppliedColor(recommended.color);
+                  setRecommendedProduct(recommended);
                   setAiRecommendation(`Subtom ${subtone} detectado. Sugerimos: ${recommended.name}!`);
                 } else {
                   const fallback = PRODUCT_MOCK.find(p => p.category.toLowerCase().replace(/s$/, "") === normalizedType);
                   if (fallback) {
                     setAppliedColor(fallback.color);
+                    setRecommendedProduct(fallback);
                     setAiRecommendation(`Subtom ${subtone} detectado. Harmoniza com ${fallback.name}.`);
                   }
                 }
@@ -175,7 +180,6 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
               }
             }
 
-            // Desenha AR apenas para batons
             if (typeRef.current === "Batons") {
               drawLipstick(ctx, landmarks, colorRef.current, video);
             }
@@ -226,18 +230,33 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
               <span className="text-rose-400 text-[10px] font-bold uppercase tracking-widest">{productType}</span>
             </div>
           </div>
-          <button onClick={onClose} className="text-white p-2 bg-white/10 rounded-full">
+          <button onClick={onClose} className="text-white p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        <div className="absolute bottom-8 left-0 w-full px-4 z-20">
-          <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 max-w-lg mx-auto flex items-center gap-4 shadow-2xl">
+        <div className="absolute bottom-8 left-0 w-full px-6 z-20 flex flex-col gap-4 items-center">
+          {/* Card de Recomendação */}
+          <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 w-full max-w-lg flex items-center gap-4 shadow-2xl">
              <div className="bg-rose-500/20 p-2 rounded-xl">
                 <Sparkles size={20} className="text-rose-300" />
              </div>
              <p className="text-white text-sm font-light italic leading-snug">{aiRecommendation}</p>
           </div>
+
+          {/* Botão de Compra Dinâmico */}
+          {analysisStatus.current === "finished" && recommendedProduct && (
+            <button
+              onClick={() => {
+                addToCart(recommendedProduct);
+                onClose();
+              }}
+              className="w-full max-w-lg bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 transform transition active:scale-95 animate-in slide-in-from-bottom-4 duration-500"
+            >
+              <ShoppingCart size={20} />
+              Comprar {recommendedProduct.name}
+            </button>
+          )}
         </div>
       </div>
     </div>
