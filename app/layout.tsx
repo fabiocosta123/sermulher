@@ -16,7 +16,7 @@ const playfair = Playfair_Display({
 export const metadata = {
   title: "Ser Mulher",
   description: "Provador Virtual e Cosméticos",
-  manifest: "/manifest.json", // <--- Adicione esta linha
+  manifest: "/manifest.json", 
   themeColor: "#000000",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   appleWebApp: {
