@@ -2,25 +2,27 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ShoppingBag, Eye } from "lucide-react";
 import { AITryOn } from "@/components/AITryOn";
+import { useCart } from "@/contexts/CartContext"; // 1. Importar o Carrinho
 
 const categories = ["Todos", "Batons", "Perfumes", "Hidratantes", "Tinturas", "Serviços"];
 
+// 2. Preços convertidos para number e adição de campos extras para o Carrinho
 const allProducts = [
-  { id: 1, name: "Batom Matte Velvet", category: "Batons", price: "R$ 45,00", image: "/produto1.jpg", hasAI: true },
-  { id: 2, name: "Perfume Essence Florale", category: "Perfumes", price: "R$ 280,00", image: "/produto2.jpg", hasAI: false },
-  { id: 3, name: "Hidratante Facial Noite", category: "Hidratantes", price: "R$ 89,00", image: "/produto3.jpg", hasAI: false },
-  { id: 4, name: "Tintura Louro Radiante", category: "Tinturas", price: "R$ 65,00", image: "/produto4.jpg", hasAI: true },
+  { id: "p1", name: "Batom Matte Velvet", category: "Batons", price: 45.00, image: "/produto1.jpg", hasAI: true, brand: "Ser Mulher", color: "#C41E3A" },
+  { id: "p2", name: "Perfume Essence Florale", category: "Perfumes", price: 280.00, image: "/produto2.jpg", hasAI: false, brand: "Ser Mulher", color: "#FDFBF9" },
+  { id: "p3", name: "Hidratante Facial Noite", category: "Hidratantes", price: 89.00, image: "/produto3.jpg", hasAI: false, brand: "Ser Mulher", color: "#FFFFFF" },
+  { id: "p4", name: "Tintura Louro Radiante", category: "Tinturas", price: 65.00, image: "/produto4.jpg", hasAI: true, brand: "Ser Mulher", color: "#E1C16E" },
 ];
 
 export default function ProdutosPage() {
+  const { addToCart } = useCart(); // 3. Hook do Carrinho
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [onlyAI, setOnlyAI] = useState(false); // Novo estado para o filtro de IA
+  const [onlyAI, setOnlyAI] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-  // Lógica de filtragem combinada (Categoria + Filtro de IA)
   const filteredProducts = allProducts.filter(p => {
     const matchCategory = activeCategory === "Todos" || p.category === activeCategory;
     const matchAI = onlyAI ? p.hasAI : true;
@@ -44,10 +46,8 @@ export default function ProdutosPage() {
           </p>
         </header>
 
-        {/* Barra de Filtros e Toggle de IA */}
+        {/* Barra de Filtros */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12 border-b border-stone-100 pb-8">
-          
-          {/* Categorias */}
           <div className="flex flex-wrap justify-center gap-2">
             {categories.map((cat) => (
               <button
@@ -63,7 +63,6 @@ export default function ProdutosPage() {
             ))}
           </div>
 
-          {/* Filtro Especial IA (Substituindo o ícone de filtro genérico) */}
           <button 
             onClick={() => setOnlyAI(!onlyAI)}
             className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-all duration-300
@@ -84,7 +83,6 @@ export default function ProdutosPage() {
             filteredProducts.map((product) => (
               <div key={product.id} className="group relative flex flex-col">
                 
-                {/* Container da Imagem */}
                 <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 rounded-sm mb-4 shadow-sm">
                   <Image
                     src={product.image}
@@ -93,7 +91,7 @@ export default function ProdutosPage() {
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
 
-                  {/* ÍCONE DE IA (Interativo) */}
+                  {/* ÍCONE DE IA */}
                   {product.hasAI && (
                     <div className="absolute top-3 right-3 z-10">
                       <button 
@@ -101,34 +99,44 @@ export default function ProdutosPage() {
                         className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg border border-stone-100 group/ai transition-transform hover:scale-110"
                       >
                         <Sparkles size={16} className="text-stone-900" />
-                        <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/ai:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-tighter pointer-events-none">
+                        <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/ai:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-tighter">
                           Testar Agora
                         </span>
                       </button>
                     </div>
                   )}
 
-                  <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <button className="w-full bg-stone-900 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-stone-800">
-                      Ver Detalhes
+                  {/* 4. Overlay com Botão de Adicionar à Sacola (Crucial para Perfumes) */}
+                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                    <button 
+                      onClick={() => addToCart(product as any)}
+                      className="bg-stone-900 text-white w-40 py-3 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-rose-600 transition-colors shadow-xl"
+                    >
+                      <ShoppingBag size={14} />
+                      Adicionar
+                    </button>
+                    <button className="bg-white text-stone-900 w-40 py-3 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors shadow-xl">
+                      <Eye size={14} />
+                      Detalhes
                     </button>
                   </div>
                 </div>
 
                 <h3 className="text-stone-900 font-bold text-sm tracking-tight uppercase mb-1">{product.name}</h3>
                 <p className="text-stone-500 text-[11px] font-light italic mb-2">{product.category}</p>
-                <p className="text-stone-900 font-medium text-sm">{product.price}</p>
+                <p className="text-rose-600 font-bold text-sm">
+                   R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
               </div>
             ))
           ) : (
             <div className="col-span-full py-20 text-center text-stone-400">
-              <p className="uppercase tracking-widest text-xs">Nenhum produto encontrado nesta categoria com IA.</p>
+              <p className="uppercase tracking-widest text-xs">Nenhum produto encontrado.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* COMPONENTE DE IA */}
       <AITryOn 
         isOpen={isAIModalOpen} 
         onClose={() => setIsAIModalOpen(false)} 

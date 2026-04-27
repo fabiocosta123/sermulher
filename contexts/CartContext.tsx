@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Product } from '@/types/product';
+import { Toast } from '@/components/Toast'; // Importe o seu componente Toast
 
 interface CartContextType {
   cart: Product[];
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, delta: number) => void; // Adicionado
+  updateQuantity: (productId: string, delta: number) => void;
   clearCart: () => void;
   totalItems: number;
   isCartOpen: boolean;
@@ -19,6 +20,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // --- ESTADO DO TOAST ---
+  const [showToast, setShowToast] = useState(false);
 
   // Persistência
   useEffect(() => {
@@ -44,7 +48,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    setIsCartOpen(true);
+
+    // --- LÓGICA PARA DISPARAR O TOAST ---
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000); // Some após 3 segundos
+
+    // Opcional: Você pode comentar a linha abaixo se preferir que 
+    // apenas o Toast apareça sem abrir a sidebar toda vez.
+    setIsCartOpen(true); 
   };
 
   const removeFromCart = (productId: string) => {
@@ -64,7 +75,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setCart([]);
 
-  // Cálculo de total de itens considerando quantidades
   const totalItemsCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
@@ -79,6 +89,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsCartOpen
     }}>
       {children}
+      
+      {/* --- RENDERIZAÇÃO DO TOAST --- */}
+      <Toast 
+        message="Item adicionado com sucesso! ✨" 
+        visible={showToast} 
+      />
     </CartContext.Provider>
   );
 }
