@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Sparkles, ShoppingBag, Eye } from "lucide-react";
 import { AITryOn } from "@/components/AITryOn";
-import { useCart } from "@/contexts/CartContext"; 
+import { useCart } from "@/contexts/CartContext";
 import Link from 'next/link';
 import { PRODUCT_MOCK } from "@/types/product"; // 1. Importação correta e única
 
@@ -20,11 +20,11 @@ export default function ProdutosPage() {
   // 2. Lógica de filtro usando o PRODUCT_MOCK oficial
   const filteredProducts = PRODUCT_MOCK.filter(p => {
     const matchCategory = activeCategory === "Todos" || p.category === activeCategory;
-    
+
     // Define quais categorias suportam IA (ajuste conforme seu AITryOn)
     const canUseAI = ["Batons", "Tinturas", "Blush"].includes(p.category);
     const matchAI = onlyAI ? canUseAI : true;
-    
+
     return matchCategory && matchAI;
   });
 
@@ -77,14 +77,15 @@ export default function ProdutosPage() {
         </div>
 
         {/* Grid de Produtos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => {
-              const hasAI = ["Batons", "Tinturas", "Blush"].includes(product.category);
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-10">
+          {filteredProducts.map((product) => {
+            const hasAI = ["Batons", "Tinturas", "Blush"].includes(product.category);
 
-              return (
-                <div key={product.id} className="group relative flex flex-col">
-                  <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 rounded-sm mb-4 shadow-sm">
+            return (
+              <div key={product.id} className="group relative flex flex-col">
+                {/* O Link agora envolve a imagem e as informações principais */}
+                <Link href={`/produtos/${product.id}`} className="block">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 rounded-2xl mb-3 shadow-sm">
                     <Image
                       src={`/${product.image}`}
                       alt={product.name}
@@ -92,61 +93,48 @@ export default function ProdutosPage() {
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
 
-                    {/* Botão de IA flutuante */}
+                    {/* Botão de IA - Mantemos separado para não disparar o Link de detalhes */}
                     {hasAI && (
-                      <div className="absolute top-3 right-3 z-10">
+                      <div className="absolute top-2 right-2 z-20">
                         <button
-                          onClick={() => openAI(product)}
-                          className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg border border-stone-100 group/ai transition-transform hover:scale-110"
+                          onClick={(e) => {
+                            e.preventDefault(); // Impede que o clique no botão abra os detalhes
+                            openAI(product);
+                          }}
+                          className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg border border-stone-100"
                         >
-                          <Sparkles size={16} className="text-stone-900" />
-                          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-stone-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/ai:opacity-100 transition-opacity whitespace-nowrap uppercase tracking-tighter">
-                            Testar Agora
-                          </span>
+                          <Sparkles size={16} className="text-rose-500" />
                         </button>
                       </div>
                     )}
-
-                    {/* Overlay com Ações - Agora com Link dinâmico usando product.id do MOCK */}
-                    <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col gap-2 bg-gradient-to-t from-black/20 to-transparent">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          addToCart(product); 
-                        }}
-                        className="w-full bg-rose-600 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-rose-700 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <ShoppingBag size={14} />
-                        Adicionar
-                      </button>
-
-                      <Link
-                        href={`/produtos/${product.id}`} // <--- Aqui o ID será b1, t1, etc.
-                        className="w-full bg-stone-900 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-stone-800 flex items-center justify-center gap-2 text-center transition-colors"
-                      >
-                        <Eye size={14} />
-                        Ver Detalhes
-                      </Link>
-                    </div>
                   </div>
 
-                  {/* Textos do Card */}
-                  <h3 className="text-stone-900 font-bold text-sm tracking-tight uppercase mb-1">{product.name}</h3>
-                  <div className="flex justify-between items-center">
-                    <p className="text-stone-500 text-[11px] font-light italic">{product.category}</p>
-                    <div className="w-3 h-3 rounded-full border border-stone-200" style={{ backgroundColor: product.color }} />
+                  {/* Textos do Card - Visíveis sempre */}
+                  <div className="px-1">
+                    <h3 className="text-stone-900 font-bold text-xs md:text-sm uppercase truncate">
+                      {product.name}
+                    </h3>
+                    <p className="text-stone-500 text-[10px] italic mb-1">{product.category}</p>
+                    <p className="text-rose-600 font-bold text-sm">
+                      R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
-                  <p className="text-rose-600 font-bold text-sm mt-2">
-                    R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              );
-            })
-          ) : (
-            <div className="col-span-full py-20 text-center text-stone-400">
-              <p className="uppercase tracking-widest text-xs">Nenhum produto encontrado nesta categoria.</p>
-            </div>
-          )}
+                </Link>
+
+                {/* Botão de Adicionar Rápido - Fixo abaixo do card no Mobile */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addToCart(product);
+                  }}
+                  className="mt-3 w-full bg-stone-900 text-white py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest active:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag size={14} />
+                  Adicionar
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
