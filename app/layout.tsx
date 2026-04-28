@@ -13,12 +13,22 @@ const playfair = Playfair_Display({
   variable: "--font-playfair"
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#000000",
+};
+
 export const metadata = {
   title: "Ser Mulher",
   description: "Provador Virtual e Cosméticos",
-  manifest: "/manifest.json", 
-  themeColor: "#000000",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  icons: {
+    icon: "/cliente-icon.png?v=1", 
+    shortcut: "/icon.png?v=1",
+    apple: "/icon-512x512.png?v=1",
+  },
+  manifest: "/manifest.json",   
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
