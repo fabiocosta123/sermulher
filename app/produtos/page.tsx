@@ -8,7 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 import Link from 'next/link';
 import { PRODUCT_MOCK } from "@/types/product"; // 1. Importação correta e única
 
-const categories = ["Todos", "Batons", "Perfumes", "Hidratantes", "Tinturas", "Serviços", "Blush"];
+const categories = ["Todos", "Batons", "Perfumes", "Hidratantes", "Tinturas", "Blush"];
 
 export default function ProdutosPage() {
   const { addToCart } = useCart();
@@ -80,14 +80,13 @@ export default function ProdutosPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => {
-              // Verifica se este produto específico suporta IA
               const hasAI = ["Batons", "Tinturas", "Blush"].includes(product.category);
 
               return (
                 <div key={product.id} className="group relative flex flex-col">
                   <div className="relative aspect-[3/4] overflow-hidden bg-stone-100 rounded-sm mb-4 shadow-sm">
                     <Image
-                      src={product.image}
+                      src={`/${product.image}`}
                       alt={product.name}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -113,7 +112,7 @@ export default function ProdutosPage() {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          addToCart(product); // Sem 'as any', pois agora os tipos batem
+                          addToCart(product); 
                         }}
                         className="w-full bg-rose-600 text-white py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-rose-700 flex items-center justify-center gap-2 transition-colors"
                       >
@@ -155,6 +154,7 @@ export default function ProdutosPage() {
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
         productType={selectedProduct?.category || ""}
+        productColor={selectedProduct?.color || "#be123c"}
       />
     </main>
   );

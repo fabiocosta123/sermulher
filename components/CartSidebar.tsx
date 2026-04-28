@@ -11,7 +11,7 @@ export function CartSidebar() {
 
   // Função para montar a mensagem do WhatsApp
   const handleWhatsAppCheckout = () => {
-    const phone = "5513998075641";
+    const phone = "5513998065641";
     const itemsList = cart
       .map((item) => {
         const qty = item.quantity ?? 1;

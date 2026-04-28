@@ -48,7 +48,7 @@ export default function ProdutoDetalhe() {
           {/* IMAGEM DO PRODUTO */}
           <div className="relative aspect-[4/5] bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100">
             <Image
-              src={product.image}
+              src={`/${product.image}`}
               alt={product.name}
               fill
               className="object-cover"

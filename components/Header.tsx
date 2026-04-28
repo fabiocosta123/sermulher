@@ -13,8 +13,8 @@ export function Header() { // Renomeado para Header para manter a consistência 
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Produtos", href: "/produtos" },
+    { name: "Serviços", href: "/servicos" },
     { name: "Sobre", href: "/sobre" },
-    { name: "Contato", href: "/contato" },
   ];
 
   return (

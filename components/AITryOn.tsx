@@ -24,6 +24,7 @@ interface AITryOnProps {
   onClose: () => void;
   productType: string;
   productColor?: string;
+  
 }
 
 export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c" }: AITryOnProps) {

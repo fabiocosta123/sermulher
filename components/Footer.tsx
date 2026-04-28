@@ -11,7 +11,7 @@ export function Footer() {
           {/* REDES SOCIAIS */}
           <div className="flex items-center space-x-8">
             <a 
-              href="https://wa.me/5513996962473" 
+              href="https://wa.me/5513998065641" 
               target="_blank" 
               rel="noopener noreferrer"
               className="group flex items-center gap-2 text-stone-500 hover:text-green-600 transition-colors"
