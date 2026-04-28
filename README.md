@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ser Mulher - Provador Virtual & E-commerce
 
-## Getting Started
+Este é um e-commerce de alto padrão focado no público feminino de estética, apresentando um **Provador Virtual com IA**.
 
-First, run the development server:
+## 📌 Índice
+1. [Sobre o Projeto](#-sobre-o-projeto)
+2. [Stacks Utilizadas](#-stacks-utilizadas)
+3. [Funcionalidades](#-funcionalidades)
+4. [Como Rodar](#-como-rodar)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Sobre o Projeto
+O site **Ser Mulher** oferece uma experiência de compra sofisticada, destacando serviços especializados em Registro/SP e uma loja online completa.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Stacks Utilizadas
+- **Next.js 15** (App Router)
+- **TypeScript** & **Tailwind CSS**
+- **Prisma ORM** (Conexão com Banco de Dados)
+- **Lucide React** (Ícones)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Funcionalidades
+- **Provador Virtual:** Simulação de tons de maquiagem.
+- **PWA:** Instalável em dispositivos móveis como um aplicativo.
+- **Carrinho Real-time:** Gerenciamento de sacola de compras.
+- **Filtros de Subtom:** Busca inteligente de produtos.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 💻 Como Rodar
+1. Clone o repositório.
+2. Instale as dependências: `npm install`.
+3. Configure sua string de conexão no arquivo `.env`:
+   ```env
+   DATABASE_URL="sua_url_aqui"
