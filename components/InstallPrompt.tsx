@@ -9,7 +9,7 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // 1. Verificar se já está instalado
+    // 1. Verifica se já está instalado
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone) return;
 
@@ -18,7 +18,7 @@ export function InstallPrompt() {
     const ios = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(ios);
 
-    // 3. Lógica para Android/Chrome (BeforeInstallPrompt)
+    // 3. Lógica para Android/Chrome 
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -28,7 +28,7 @@ export function InstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Para iOS, mostramos o convite manualmente após um tempo
+    // iOS, mostra o convite manualmente após um tempo
     if (ios) {
       setTimeout(() => setIsShown(true), 8000);
     }

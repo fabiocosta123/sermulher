@@ -1,5 +1,4 @@
 import "./globals.css";
-import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/contexts/CartContext";
@@ -44,9 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           
           <CartSidebar />
 
-          <Header />
-
-          
+          <Header />          
           <main className="min-h-screen pt-20 lg:pt-24">
             {children}
             <InstallPrompt />

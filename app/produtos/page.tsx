@@ -6,7 +6,7 @@ import { Sparkles, ShoppingBag, Eye } from "lucide-react";
 import { AITryOn } from "@/components/AITryOn";
 import { useCart } from "@/contexts/CartContext";
 import Link from 'next/link';
-import { PRODUCT_MOCK } from "@/types/product"; // 1. Importação correta e única
+import { PRODUCT_MOCK } from "@/types/product"; 
 
 const categories = ["Todos", "Batons", "Perfumes", "Hidratantes", "Tinturas", "Blush"];
 
@@ -17,11 +17,11 @@ export default function ProdutosPage() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-  // 2. Lógica de filtro usando o PRODUCT_MOCK oficial
+  // 2. Lógica de filtro 
   const filteredProducts = PRODUCT_MOCK.filter(p => {
     const matchCategory = activeCategory === "Todos" || p.category === activeCategory;
 
-    // Define quais categorias suportam IA (ajuste conforme seu AITryOn)
+    // Define quais categorias suportam IA 
     const canUseAI = ["Batons", "Tinturas", "Blush"].includes(p.category);
     const matchAI = onlyAI ? canUseAI : true;
 
@@ -93,12 +93,12 @@ export default function ProdutosPage() {
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
                     />
 
-                    {/* Botão de IA - Mantemos separado para não disparar o Link de detalhes */}
+                    {/* Botão de IA  */}
                     {hasAI && (
                       <div className="absolute top-2 right-2 z-20">
                         <button
                           onClick={(e) => {
-                            e.preventDefault(); // Impede que o clique no botão abra os detalhes
+                            e.preventDefault(); 
                             openAI(product);
                           }}
                           className="bg-white/90 backdrop-blur-md p-2 rounded-full shadow-lg border border-stone-100"

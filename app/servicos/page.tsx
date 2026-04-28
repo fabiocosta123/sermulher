@@ -1,7 +1,6 @@
 import { Scissors, Sparkles, User, Palette, Heart, GraduationCap, Star, Gem } from "lucide-react";
 import Image from "next/image";
 
-// Interface para organizar os dados
 interface ServiceCategory {
   title: string;
   icon: any;
@@ -83,7 +82,7 @@ export default function ServicosPage() {
               <div className="relative h-64 w-full bg-stone-200 overflow-hidden">
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
                 <Image
-                  src={`/${service.image}`} // Adiciona a barra inicial para ler da pasta public
+                  src={`/${service.image}`} 
                   alt={service.title}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -118,7 +117,7 @@ export default function ServicosPage() {
             </div>
           ))}
 
-          {/* Card de Cursos - Estilo Diferenciado */}
+          {/* Card de Cursos */}
           <div className="lg:col-span-1 bg-stone-900 rounded-[2.5rem] p-8 text-white flex flex-col justify-center items-center text-center">
             <GraduationCap size={48} className="text-rose-400 mb-4" />
             <h2 className="font-serif text-3xl mb-4">Cursos e Workshops</h2>

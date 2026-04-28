@@ -1,4 +1,4 @@
-// types/product.ts
+
 export interface Product {
   id: string;
   name: string;
@@ -14,7 +14,7 @@ export interface Product {
 export interface CartItem extends Product { quantity: number; }
 
 export const PRODUCT_MOCK: Product[] = [
-  // --- BATONS (Manutenção das cores originais com foco em subtons) ---
+  // batons
   {
     id: "b1",
     name: "Batom Velvety Ruby Rose",
@@ -76,7 +76,7 @@ export const PRODUCT_MOCK: Product[] = [
     image: "batomVelvetyRubyRose.jpg"
   },
 
-  // --- TINTURAS (Cores otimizadas para visibilidade no Swatch/Bolinha) ---
+  // tintua
   {
     id: "t1",
     name: "Louro Platinado Gelo",
@@ -128,7 +128,7 @@ export const PRODUCT_MOCK: Product[] = [
     image: "Tintura.jpg"
   },
 
-  // --- BLUSH (Cores de alto contraste) ---
+  // blush
   {
     id: "bl1",
     name: "Blush Rosé Cool",

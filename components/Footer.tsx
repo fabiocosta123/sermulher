@@ -44,9 +44,9 @@ export function Footer() {
               <Image 
                 src="/logo.png" 
                 alt="Ser Mulher Logo" 
-                width={100} // Um pouco menor que na Navbar para ficar proporcional
+                width={100} 
                 height={32}
-                className="h-auto w-auto opacity-80" // Opacidade leve para ser discreto
+                className="h-auto w-auto opacity-80" 
               />
             </Link>
           </div>

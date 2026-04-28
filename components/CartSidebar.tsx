@@ -6,10 +6,10 @@ import { useCart } from "@/contexts/CartContext";
 export function CartSidebar() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity } = useCart();
 
-  // Cálculo do total considerando as quantidades
+  // Cálculo do total 
   const total = cart.reduce((sum, item) => sum + item.price * (item.quantity ?? 1), 0);
 
-  // Função para montar a mensagem do WhatsApp
+  // mensagem do WhatsApp
   const handleWhatsAppCheckout = () => {
     const phone = "5513998065641";
     const itemsList = cart

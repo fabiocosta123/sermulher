@@ -6,9 +6,9 @@ import Link from "next/link";
 import { ShoppingBag, Menu, X } from "lucide-react"; 
 import { useCart } from "@/contexts/CartContext";
 
-export function Header() { // Renomeado para Header para manter a consistência do layout
+export function Header() { 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { totalItems, setIsCartOpen } = useCart(); // Pegando os dados do contexto
+  const { totalItems, setIsCartOpen } = useCart(); 
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -59,7 +59,7 @@ export function Header() { // Renomeado para Header para manter a consistência 
           ))}
         </div>
 
-        {/* CARRINHO (Botão Refatorado) */}
+        {/* CARRINHO */}
         <div className="flex items-center">
           <button 
             onClick={() => setIsCartOpen(true)} // Agora abre a sidebar lateral
@@ -67,7 +67,7 @@ export function Header() { // Renomeado para Header para manter a consistência 
           >
             <ShoppingBag size={24} strokeWidth={1.5} />
             
-            {/* Contador Dinâmico do Contexto */}
+            {/* Contador Dinâmico */}
             {totalItems > 0 && (
               <span className="absolute top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-stone-900 text-[10px] font-bold text-white group-hover:bg-rose-600 transition-all animate-in zoom-in">
                 {totalItems}
@@ -77,7 +77,7 @@ export function Header() { // Renomeado para Header para manter a consistência 
         </div>
       </div>
 
-      {/* MENU MOBILE (Expandível) */}
+      {/* MENU MOBILE */}
       {isMenuOpen && (
         <div className="md:hidden bg-[#FDFBF9] border-b border-stone-100 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-col p-6 space-y-4">

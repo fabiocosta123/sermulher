@@ -10,7 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 const LIP_INDICES = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291];
 
 /**
- * Calcula o subtom baseado no equilíbrio entre canais quentes e frios
+ * Calcula o subtom baseado em quentes e frios
  */
 const calculateSubtone = (r: number, g: number, b: number): "frio" | "quente" | "neutro" => {
   const balance = r - b;
@@ -30,7 +30,6 @@ interface AITryOnProps {
 export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c" }: AITryOnProps) {
   const { addToCart } = useCart();
   
-  // Refs para performance e controle de ciclo de vida
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const analysisStatus = useRef<"idle" | "analyzing" | "finished">("idle");
@@ -44,7 +43,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
   const [recommendedProduct, setRecommendedProduct] = useState<Product | null>(null);
 
   /**
-   * Desenha o batom com efeito de blend realista
+   * Desenha o batom 
    */
   const drawLipstick = useCallback((ctx: CanvasRenderingContext2D, landmarks: any, color: string, video: HTMLVideoElement) => {
     const { width: w, height: h } = ctx.canvas;
@@ -94,7 +93,7 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
       const px = Math.floor(point.x * canvas.width);
       const py = Math.floor(point.y * canvas.height);
 
-      // Amostragem de área 5x5 para evitar ruído de pixels isolados
+      // Amostragem de área 5x5 
       const size = 5;
       const imageData = ctx.getImageData(px - 2, py - 2, size, size).data;
       
@@ -107,13 +106,13 @@ export function AITryOn({ isOpen, onClose, productType, productColor = "#be123c"
       const subtone = calculateSubtone(r / count, g / count, b / count);
       const normalizedType = productType.toLowerCase().replace(/s$/, "");
 
-      // FILTRAGEM DINÂMICA: Busca todos os produtos que combinam
+      // FILTRAGEM DINÂMICA: 
       const matches = PRODUCT_MOCK.filter(p => 
         p.subtone === subtone && 
         p.category.toLowerCase().replace(/s$/, "") === normalizedType
       );
 
-      // SORTEIO: Se houver vários, escolhe um aleatório para variar a experiência
+      
       const selected = matches.length > 0 
         ? matches[Math.floor(Math.random() * matches.length)]
         : PRODUCT_MOCK.find(p => p.category.toLowerCase().replace(/s$/, "") === normalizedType);

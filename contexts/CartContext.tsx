@@ -21,10 +21,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
-  // --- ESTADO DO TOAST ---
+  
   const [showToast, setShowToast] = useState(false);
 
-  // Persistência
+  
   useEffect(() => {
     const savedCart = localStorage.getItem("ser-mulher-cart");
     if (savedCart) {
@@ -51,10 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // --- LÓGICA PARA DISPARAR O TOAST ---
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000); // Some após 3 segundos
-
-    // Opcional: Você pode comentar a linha abaixo se preferir que 
-    // apenas o Toast apareça sem abrir a sidebar toda vez.
+    setTimeout(() => setShowToast(false), 3000); 
     setIsCartOpen(true); 
   };
 
@@ -90,7 +87,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }}>
       {children}
       
-      {/* --- RENDERIZAÇÃO DO TOAST --- */}
+      {/*  RENDERIZA O TOAST  */}
       <Toast 
         message="Item adicionado com sucesso! ✨" 
         visible={showToast} 
