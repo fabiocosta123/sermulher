@@ -1,0 +1,46 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modelo para os Produtos da Loja
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  price          Decimal  @db.Decimal(10, 2)
+  category       String
+  imageUrl       String?  
+  
+  // Campos para o Provador Virtual (IA)
+  isVirtualTryOn Boolean  @default(false)
+  colorHex       String?  
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Modelo para os Serviços de Estética
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  duration    String?  
+  imageUrl    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Modelo para Configurações Globais do Site
+model SiteConfig {
+  id             String  @id @default("global")
+  primaryColor   String  @default("#8e44ad") 
+  secondaryColor String  @default("#faf8f5")
+  aboutText      String? @db.Text
+  contactPhone   String?
+}
