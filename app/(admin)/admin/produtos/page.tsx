@@ -1,12 +1,15 @@
 import { Plus, Pencil, Trash2, Camera } from 'lucide-react';
 import { IMAGE_GUIDELINES } from "@/lib/upload";
+import { prisma } from "@/lib/prisma"; // Certifique-se de que o caminho está correto
+import Link from 'next/link';
 
-export default function ProdutosAdminPage() {
-  // refatorar e buscar esses dados do Prisma
-  const produtosFake = [
-    { id: 1, nome: 'Batom Matte Intenso', preco: 49.90, categoria: 'Maquiagem' },
-    { id: 2, nome: 'Sérum Facial Hidratante', preco: 89.90, categoria: 'Skincare' },
-  ];
+export default async function ProdutosAdminPage() {
+  // Busca os dados reais do banco de dados Neon
+  const produtos = await prisma.product.findMany({
+    orderBy: {
+      name: 'asc'
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -15,10 +18,14 @@ export default function ProdutosAdminPage() {
           <h1 className="text-2xl font-bold text-stone-800">Gerenciar Produtos</h1>
           <p className="text-sm text-stone-500">Adicione ou edite os itens do seu catálogo</p>
         </div>
-        <button className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors">
+        {/* Link para a página ou modal onde você colocará o ProductForm */}
+        <Link 
+          href="/admin/produtos/novo" 
+          className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"
+        >
           <Plus size={20} />
           Novo Produto
-        </button>
+        </Link>
       </div>
 
       {/* Card de Informação sobre Fotos */}
@@ -45,23 +52,32 @@ export default function ProdutosAdminPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
-            {produtosFake.map((produto) => (
-              <tr key={produto.id} className="hover:bg-stone-50 transition-colors">
-                <td className="px-6 py-4 font-medium text-stone-800">{produto.nome}</td>
-                <td className="px-6 py-4 text-stone-500">{produto.categoria}</td>
-                <td className="px-6 py-4 text-stone-800">
-                  {produto.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button className="p-2 text-stone-400 hover:text-blue-600 transition-colors">
-                    <Pencil size={18} />
-                  </button>
-                  <button className="p-2 text-stone-400 hover:text-red-600 transition-colors">
-                    <Trash2 size={18} />
-                  </button>
+            {produtos.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-10 text-center text-stone-500">
+                  Nenhum produto cadastrado ainda.
                 </td>
               </tr>
-            ))}
+            ) : (
+              produtos.map((produto) => (
+                <tr key={produto.id} className="hover:bg-stone-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-stone-800">{produto.name}</td>
+                  <td className="px-6 py-4 text-stone-500">{produto.category}</td>
+                  <td className="px-6 py-4 text-stone-800">
+                    {/* Convertendo Decimal do Prisma para número para usar toLocaleString */}
+                    {Number(produto.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-2">
+                    <button className="p-2 text-stone-400 hover:text-blue-600 transition-colors">
+                      <Pencil size={18} />
+                    </button>
+                    <button className="p-2 text-stone-400 hover:text-red-600 transition-colors">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
